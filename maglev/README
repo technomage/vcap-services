@@ -1,0 +1,12 @@
+MagLev as a Service
+
+This is the primary README for integrating MagLev into CloudFoundry.  You
+will need both this vcap-services repository and the vcap repository.
+
+To clone the repositories:
+
+  git clone git://github.com/MagLev/vcap.git
+  git clone git://github.com/MagLev/vcap-services.git
+
+TODO:
++ Need to fix the MAGLEV_HOME specification and add to instructions

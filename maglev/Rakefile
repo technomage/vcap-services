@@ -1,0 +1,74 @@
+require 'rake'
+
+desc "Run specs"
+task "spec" => ["bundler:install:test", "test:spec"]
+
+desc "Run specs using RCov"
+task "spec:rcov" => ["bundler:install:test", "test:spec:rcov"]
+
+namespace "bundler" do
+  desc "Install gems"
+  task "install" do
+    sh("bundle install")
+  end
+
+  desc "Install gems for test"
+  task "install:test" do
+    sh("bundle install --without development production")
+  end
+
+  desc "Install gems for production"
+  task "install:production" do
+    sh("bundle install --without development test")
+  end
+
+  desc "Install gems for development"
+  task "install:development" do
+    sh("bundle install --without test production")
+  end
+end
+
+namespace "test" do
+  task "spec" do |t|
+    sh("cd spec && rake spec")
+  end
+
+ task "spec:rcov" do |t|
+    sh("cd spec && rake spec:rcov")
+  end
+end
+
+
+CC_DIR = '/home/pmclain/cloudfoundry/vcap/cloud_controller'
+MLHOME = '/home/pmclain/MagLev/MagLev-25692.Linux-x86_64'
+
+desc "Bring vcap down"
+task :down do
+  sh "vcap stop"
+end
+
+desc "Bring vcap down and reset dbs"
+task :resetdbs => [:down, :resetmldb, :resetccdb]
+
+desc "reset the maglev cloudfoundry db"
+task :resetmldb => :down do
+  puts "reset MagLev db"
+  sh "rm -rf /var/vcap/services/maglev/*"
+end
+
+desc "reset the  cloudfoundry cloud_controller db"
+task :resetccdb => :down do
+  puts "reset cloudfoundry cloud_controller db"
+  sh "rm -f #{CC_DIR}/cloudcontroller.sqlite3"
+end
+
+desc "Clean out all the maglev-e3aab-... repos and conf files"
+task :cleanml do
+  cd(MLHOME) do
+    sh "MAGLEV_HOME=#{MLHOME} rake stone:all[stop]"
+    sh "rm -f ./etc/conf.d/maglev-*"
+    sh "rm -rf ./data/maglev-*"
+  end
+end
+
+# desc "do a kill -9 on all stoned processes"

@@ -1,0 +1,24 @@
+#!/usr/bin/env ruby
+# Copyright (c) 2009-2011 VMware, Inc.
+
+ENV["BUNDLE_GEMFILE"] ||= File.expand_path("../../Gemfile", __FILE__)
+
+$LOAD_PATH.unshift File.join(File.dirname(__FILE__), '..', '..', 'base', 'lib')
+require 'base/gateway'
+
+$LOAD_PATH.unshift File.join(File.dirname(__FILE__), '..', 'lib')
+require 'maglev_service/maglev_provisioner'
+
+class VCAP::Services::Maglev::Gateway < VCAP::Services::Base::Gateway
+
+  def provisioner_class
+    VCAP::Services::Maglev::Provisioner
+  end
+
+  def default_config_file
+    File.join(File.dirname(__FILE__), '..', 'config', 'maglev_gateway.yml')
+  end
+
+end
+
+VCAP::Services::Maglev::Gateway.new.start
