@@ -11,4 +11,4 @@ token: "0xdeadbeef"
 log_level: DEBUG
 mbus: nats://localhost:4222
 pid: /var/vcap/sys/run/maglev_service.pid
-node_timeout: 2
+node_timeout: 30
