@@ -19,10 +19,10 @@
 #      ==== [2011-04-18 12:39:38 -0700] ..Maglev::Node::ProvisionedService ==== pid: 3649 running?: false
 #      ==== [2011-04-18 12:39:38 -0700] ..Maglev::Node::ProvisionedService ==== pid: 19409 running?: false
 #      ...
-require 'fileutils'
-require 'logger'
-require 'pp'
-require 'set'
+require 'fileutils'  # TODO: remove?
+require 'logger'     
+require 'pp'         # TODO: remove?
+require 'set'        # TODO: remove?
 
 require 'datamapper'
 require 'nats/client'
@@ -54,21 +54,20 @@ class VCAP::Services::Maglev::Node
     super(options)  # handles @node_id, @logger, @local_ip, @node_nats
 
     @available_memory = options[:available_memory]
-    @base_dir         = options[:base_dir]
     @max_memory       = options[:max_memory]
     @local_db         = options[:local_db]
     @maglev_home      = options[:maglev_home]
 
     raise "Maglev home not set: #{options.inspect}" unless @maglev_home
-
-    FileUtils.mkdir_p(@base_dir) if @base_dir
     start_db
 
     # A Hack to ensure provisioned stones are running.  Since there is
     # no officially supported life-cycle hook to start a provisioned
     # service process during app start up, we just ensure that all
     # provisoined stones on a node start when the node starts up.
-    ProvisionedService.all.each { |provisioned_service| provisioned_service.start_stone }
+    ProvisionedService.all.each do |provisioned_service|
+      provisioned_service.start_stone
+    end
   end
 
   def start_db
@@ -139,13 +138,8 @@ class VCAP::Services::Maglev::Node
     @logger.debug("Killing #{service.name} started with pid #{service.pid}")
     # destroy() removes the entry from the DB
     raise "Could not cleanup service: #{service.errors.pretty_inspect}" unless service.destroy
-
     service.kill
     service.remove_stone_files
-
-    dir = File.join(@base_dir, service.name)
-
-    EM.defer { FileUtils.rm_rf(dir) }
     true
   rescue => e
     @logger.warn(e)
@@ -173,17 +167,9 @@ class VCAP::Services::Maglev::Node
     # The pid is the stoned pid.  We can call methods on the
     # provisioned service to check if it is running etc.
 
-    #    username = UUIDTools::UUID.random_create.to_s
-    #    password = UUIDTools::UUID.random_create.to_s
-
     response = {
       "hostname" => @local_ip,
       "stonename" => name,
-      #      "port"    => service.port,
-      # "username" => username,
-      # "password" => password,
-      # "name"     => service.name,
-      # "db"       => service.db
     }
 
     @logger.debug("response: #{response}")
@@ -230,17 +216,7 @@ class VCAP::Services::Maglev::Node
       stone_pid
     else
       $0 = "Starting Maglev service: #{service.name}"
-      # close_fds  # Seems to give a log of EINVALs
-
-      dir = File.join(@base_dir, service.name)
-      data_dir = File.join(dir, "data")
-      log_file = File.join(dir, "log")
-
-      FileUtils.mkdir_p(dir)
-      FileUtils.mkdir_p(data_dir)
-
       service.exec_start_stone
-
       raise "Exec failed....#{$?.inspect}"
     end
   end

@@ -56,12 +56,11 @@ class VCAP::Services::Maglev::Node
     #    $MAGLEV_HOME/etc/conf.d/#{self.name}.conf
     #    $MAGLEV_HOME/data/#{self.name}/*
     def create_stone_files
-      raise "Config file #{config_file()} already exists" if File.exist?(config_file())
-      raise "Extent #{data_dir} already exists" if dbf_exists?
-
-      cmd = "rake stone:create[#{name}]"
-      Dir.chdir(maglev_home) { maglev_system(cmd) }
-      raise "Failed to create stone dbf for #{name}" unless dbf_exists?
+      unless File.exist?(config_file()) || dbf_exists?
+        cmd = "rake stone:create[#{name}]"
+        Dir.chdir(maglev_home) { maglev_system(cmd) }
+        raise "Failed to create stone dbf for #{name}" unless dbf_exists?
+      end
     end
 
     def dbf_exists?
