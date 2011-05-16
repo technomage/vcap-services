@@ -15,10 +15,6 @@
 # 3. It seems like ProvisionedService#kill() is getting called a lot on
 #    shutdown...Perhaps entries are not getting deleted out of the DB?:
 #
-#      ==== [2011-04-18 12:39:38 -0700] VCAP::Services::Maglev::Node ==== Shutting down instances..
-#      ==== [2011-04-18 12:39:38 -0700] ..Maglev::Node::ProvisionedService ==== pid: 3649 running?: false
-#      ==== [2011-04-18 12:39:38 -0700] ..Maglev::Node::ProvisionedService ==== pid: 19409 running?: false
-#      ...
 require 'fileutils'  # TODO: remove?
 require 'logger'     
 require 'pp'         # TODO: remove?
@@ -53,12 +49,18 @@ class VCAP::Services::Maglev::Node
   def initialize(options)
     super(options)  # handles @node_id, @logger, @local_ip, @node_nats
 
+    @logger.info("maglev_node starting with options: #{@options.inspect}")
+    
+    @base_dir         = options[:base_dir]
     @available_memory = options[:available_memory]
     @max_memory       = options[:max_memory]
     @local_db         = options[:local_db]
     @maglev_home      = options[:maglev_home]
 
     raise "Maglev home not set: #{options.inspect}" unless @maglev_home
+    @logger.info("maglev_node starting with MAGLEV_HOME=#{@maglev_home.inspect}")
+
+    FileUtils.mkdir_p(@base_dir) if @base_dir
     start_db
 
     # A Hack to ensure provisioned stones are running.  Since there is
@@ -66,6 +68,7 @@ class VCAP::Services::Maglev::Node
     # service process during app start up, we just ensure that all
     # provisoined stones on a node start when the node starts up.
     ProvisionedService.all.each do |provisioned_service|
+      @logger.info("maglev_node starting provisioned stone: #{provisioned_service.name}")
       provisioned_service.start_stone
     end
   end
